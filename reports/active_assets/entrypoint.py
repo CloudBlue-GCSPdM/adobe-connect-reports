@@ -11,9 +11,9 @@ from connect.client import R
 from ..utils import convert_to_datetime, get_basic_value, get_value, today_str
 
 HEADERS = (
-    'assetId', 'productId', 'providerId', 'providerName', 'marketplaceId','marketplaceName', 'resellerId',
-    'resellerName', 'createdAt', 'customerId', 'customerName', 'seamlessMove', 'discountGroup',
-    'action','renewalDate', 'type', 'currency','cost','msrp','resellerCost','seats'
+    'assetId', 'assetStatus', 'externalId' , 'productId', 'providerId', 'providerName', 'marketplaceId','marketplaceName', 'contractId', 'contractName', 'resellerId',
+    'resellerExternalId', 'resellerName', 'createdAt', 'customerId', 'customerExternalId', 'customerName', 'seamlessMove', 'discountGroup',
+    'action','renewalDate', 'purchaseType', 'adobeCustomerId', 'adobeVIPNumber', 'adobeUserEmail', 'currency','cost','msrp','resellerCost','seats'
 )
 
 def generate(
@@ -51,7 +51,7 @@ def generate(
     """
     assets = _get_assets(client, parameters)
     price_list_points_DB = {}
-
+    
     progress = 0
     total = assets.count()
     if renderer_type == 'csv':
@@ -73,7 +73,9 @@ def _get_assets(client, parameters):
     environment = 'production'
 
     query = R()
-
+    if parameters.get('date') and parameters['date']['after'] != '':
+        query &= R().events.created.at.ge(parameters['date']['after'])
+        query &= R().events.created.at.le(parameters['date']['before'])
     if parameters.get('product') and parameters['product']['all'] is False:
         query &= R().product.id.oneof(parameters['product']['choices'])
     query &= R().status.oneof(status)
@@ -82,28 +84,37 @@ def _get_assets(client, parameters):
     return client.assets.filter(query)
 
 def _process_line(asset, marketplace_price_list_points):
-    seamless_move, discount, action, renewal_date_parameter = _process_asset_parameters(asset['params'])
+    seamless_move, discount, action, renewal_date_parameter, adobe_customer_id, adobe_vip_number, adobe_user_email = _process_asset_parameters(asset['params'])
     renewal_date = _calculate_renewal_date(renewal_date_parameter, asset['events']['created']['at'], action)
     asset_type, currency, cost, reseller_cost, msrp, seats = _get_asset_type_financials_and_seats_number(asset['items'], marketplace_price_list_points, asset['product']['id'])
     return (
         get_basic_value(asset ,'id'),
+        get_basic_value(asset ,'status'),
+        get_basic_value(asset ,'external_id'),
         get_basic_value(asset['product'], 'id'),
         get_value(asset['connection'], 'provider', 'id'),
         get_value(asset['connection'], 'provider', 'name'),
         get_basic_value(asset['marketplace'], 'id'),
         get_basic_value(asset['marketplace'], 'name'),
+        get_basic_value(asset['contract'], 'name'),
+        get_basic_value(asset['contract'], 'name'),
         get_value(asset['tiers'], 'tier1', 'id'),
+        get_value(asset['tiers'], 'tier1', 'external_id'),
         get_value(asset['tiers'], 'tier1', 'name'),
         convert_to_datetime(
             get_value(asset['events'], 'created', 'at'),
         ),
         get_value(asset['tiers'], 'customer', 'id'),
+        get_value(asset['tiers'], 'customer', 'external_id'),
         get_value(asset['tiers'], 'customer', 'name'),
         seamless_move,
         discount,
         action,
         renewal_date,
         asset_type,
+        adobe_customer_id,
+        adobe_vip_number,
+        adobe_user_email,
         currency,
         '{:0.2f}'.format(cost),
         '{:0.2f}'.format(reseller_cost),
@@ -112,9 +123,12 @@ def _process_line(asset, marketplace_price_list_points):
     )
 
 def _process_asset_parameters(asset_parameters):
-    seamless_move = None
-    discount = None
-    action = None
+    seamless_move = '-'
+    discount = '-'
+    action = '-'
+    adobe_customer_id = '-'
+    adobe_vip_number = '-'
+    adobe_user_email = '-'
     for assetParam in asset_parameters:
         if assetParam['id'] == 'seamless_move':
             seamless_move = assetParam['value']
@@ -135,7 +149,13 @@ def _process_asset_parameters(asset_parameters):
             action = assetParam['value']
         elif assetParam['id'] == 'renewal_date':
             renewal_date = assetParam['value']
-    return seamless_move, discount, action, renewal_date
+        elif assetParam['id'] == 'adobe_customer_id' and assetParam['value'] != '':
+            adobe_customer_id = assetParam['value']
+        elif assetParam['id'] == 'adobe_vip_number' and assetParam['value'] != '':
+            adobe_vip_number = assetParam['value']
+        elif assetParam['id'] == 'adobe_user_email' and assetParam['value'] != '':
+            adobe_user_email = assetParam['value']
+    return seamless_move, discount, action, renewal_date, adobe_customer_id, adobe_vip_number, adobe_user_email
 
 def _calculate_renewal_date(renewal_date_parameter, asset_creation_date, action):
     renewal_date = None

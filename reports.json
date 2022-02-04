@@ -20,7 +20,14 @@
                     "name":"Product list",
                     "description":"Select the products you want to include in report",
                     "required":true
-                 }
+                 },
+                 {
+                    "id":"date",
+                    "type":"date_range",
+                    "name":"Creation date",
+                    "required":true,
+                    "description":"Select the asset creation date you want to start the report on"
+                }
             ],
             "renderers": [
                 {
