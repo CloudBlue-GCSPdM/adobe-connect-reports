@@ -172,7 +172,7 @@ def _calculate_renewal_date(renewal_date_parameter, asset_creation_date, action)
             renewal_date = datetime.datetime.fromisoformat(renewal_date_parameter).replace(tzinfo=datetime.timezone.utc) + datetime.timedelta(days = 365)
         else:
             renewal_date = datetime.datetime.fromisoformat(renewal_date_parameter).replace(tzinfo=datetime.timezone.utc).replace(year = (datetime.datetime.now(datetime.timezone.utc).year + 1))
-    return renewal_date
+    return renewal_date.strftime("%Y-%m-%d %H:%M:%S")
 
 def _fill_marketplace_pricelist(client, marketplace_id, product_id):
     marketplace_price_list = {}
