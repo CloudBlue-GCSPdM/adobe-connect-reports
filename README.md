@@ -1,7 +1,7 @@
 # Welcome to Adobe Connect reports !
 
 
-Adobe Connect reports
+Adobe Connect reports both for vendor and providers
 
 
 
