@@ -51,7 +51,6 @@ def generate(
     """
     assets = _get_assets(client, parameters)
     price_list_points_DB = {}
-    
     progress = 0
     total = assets.count()
     if renderer_type == 'csv':
@@ -80,8 +79,8 @@ def _get_assets(client, parameters):
         query &= R().product.id.oneof(parameters['product']['choices'])
     query &= R().status.oneof(status)
     query &= R().connection.type.eq(environment)
-
-    return client.assets.filter(query)
+    
+    return client('subscriptions').assets.filter(query)
 
 def _process_line(asset, marketplace_price_list_points):
     seamless_move, discount, action, renewal_date_parameter, adobe_customer_id, adobe_vip_number, adobe_user_email = _process_asset_parameters(asset['params'])
