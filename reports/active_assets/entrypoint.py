@@ -140,6 +140,14 @@ def _process_asset_parameters(asset_parameters):
                 discount = 'Level 3'
             elif assetParam['value'] == '04A12':
                 discount = 'Level 4'
+            elif assetParam['value'] == '01012':
+                discount = 'TLP Level 1'
+            elif assetParam['value'] == '02012':
+                discount = 'TLP Level 2'
+            elif assetParam['value'] == '03012':
+                discount = 'TLP Level 3'
+            elif assetParam['value'] == '04012':
+                discount = 'TLP Level 4'
             elif assetParam['value'] == '':
                 discount = 'Empty'
             else:
@@ -180,7 +188,7 @@ def _fill_marketplace_pricelist(client, marketplace_id, product_id):
     listing_query &= R().product.id.eq(product_id)
     listing_query &= R().status.eq('listed')
     listing = client.listings.filter(listing_query).first()
-    if 'pricelist' in listing and listing['pricelist']['status'] == 'active':
+    if listing and 'pricelist' in listing and listing['pricelist']['status'] == 'active':
         pricelist_id = listing['pricelist']['id']
         price_list_version_query = R()
         price_list_version_query &= R().pricelist.id.eq(pricelist_id)
