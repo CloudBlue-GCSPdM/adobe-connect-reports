@@ -7,13 +7,19 @@ import datetime
 from http import client
 import re
 from connect.client import R
+import requests
+
 
 from ..utils import convert_to_datetime, get_basic_value, get_value, today_str
+
+FOREXAPI_URL = 'https://theforexapi.com/api/latest'
+BASE_CURRENCY = 'USD'
 
 HEADERS = (
     'assetId', 'assetStatus', 'externalId' , 'productId', 'providerId', 'providerName', 'marketplaceId','marketplaceName', 'contractId', 'contractName', 'resellerId',
     'resellerExternalId', 'resellerName', 'createdAt', 'customerId', 'customerExternalId', 'customerName', 'seamlessMove', 'discountGroup',
-    'action','renewalDate', 'purchaseType', 'adobeCustomerId', 'adobeVIPNumber', 'adobeUserEmail', 'currency','cost','msrp','resellerCost','seats'
+    'action','renewalDate', 'purchaseType', 'adobeCustomerId', 'adobeVIPNumber', 'adobeUserEmail', 'currency','cost', 'resellerCost', 'msrp','seats',
+    'USDCost', 'USDMsrp', 'USDResellerCost'
 )
 
 def generate(
@@ -86,6 +92,7 @@ def _process_line(asset, marketplace_price_list_points):
     seamless_move, discount, action, renewal_date_parameter, adobe_customer_id, adobe_vip_number, adobe_user_email = _process_asset_parameters(asset['params'])
     renewal_date = _calculate_renewal_date(renewal_date_parameter, asset['events']['created']['at'], action)
     asset_type, currency, cost, reseller_cost, msrp, seats = _get_asset_type_financials_and_seats_number(asset['items'], marketplace_price_list_points, asset['product']['id'])
+    base_currency_cost, base_currency_reseller_cost, base_currency_msrp = _get_base_currency_financials(cost, reseller_cost, msrp, marketplace_price_list_points)
     return (
         get_basic_value(asset ,'id'),
         get_basic_value(asset ,'status'),
@@ -118,7 +125,10 @@ def _process_line(asset, marketplace_price_list_points):
         '{:0.2f}'.format(cost),
         '{:0.2f}'.format(reseller_cost),
         '{:0.2f}'.format(msrp),
-        seats
+        seats,
+        '{:0.2f}'.format(base_currency_cost),
+        '{:0.2f}'.format(base_currency_reseller_cost),
+        '{:0.2f}'.format(base_currency_msrp),
     )
 
 def _process_asset_parameters(asset_parameters):
@@ -195,6 +205,19 @@ def _fill_marketplace_pricelist(client, marketplace_id, product_id):
         price_list_version_query &= R().status.eq('active')
         price_list_version = client('pricing').versions.filter(price_list_version_query).first()
         marketplace_price_list['currency'] = price_list_version['pricelist']['currency']
+        if marketplace_price_list['currency'] == BASE_CURRENCY:
+            marketplace_price_list['FX'] = 1
+        else:
+            exchange_params = {'base': marketplace_price_list['currency'], 'symbols': BASE_CURRENCY}
+            exchange_request = requests.get(FOREXAPI_URL, params = exchange_params)
+            if exchange_request.status_code == requests.codes.ok:
+                if BASE_CURRENCY in exchange_request.json()['rates']:
+                    marketplace_price_list['FX'] = float(exchange_request.json()['rates'][BASE_CURRENCY])
+                else:
+                    marketplace_price_list['FX'] = 0
+            else:
+                marketplace_price_list['FX'] = 0
+        print('In {} -> Currency: {} -> FX: {}'.format('_fill_marketplace_pricelist', marketplace_price_list['currency'], marketplace_price_list['FX']))
         price_list_version_points = client('pricing').versions[price_list_version['id']].points.all()
         for price_list_version_point in price_list_version_points:
             if float(price_list_version_point['attributes']['price']) != 0:
@@ -235,5 +258,15 @@ def _get_asset_type_financials_and_seats_number(asset_items, marketplace_price_l
                         msrp = msrp + int(item['quantity']) * float(marketplace_price_list_points['pricepoints'][product_id][item['global_id']]['msrp'])
                         reseller_cost = reseller_cost + int(item['quantity']) * float(marketplace_price_list_points['pricepoints'][product_id][item['global_id']]['resellerCost'])
     
-
     return asset_type, currency, cost, reseller_cost, msrp, seats
+    
+def _get_base_currency_financials(cost, reseller_cost, msrp, marketplace_price_list_points):
+    base_currency_cost = 0
+    base_currency_reseller_cost = 0
+    base_currency_msrp = 0
+    if marketplace_price_list_points and len(marketplace_price_list_points) > 0:
+        print('In {} -> Currency: {} -> FX: {}'.format('_get_base_currency_financials', marketplace_price_list_points['currency'], marketplace_price_list_points['FX']))
+        base_currency_cost = cost * marketplace_price_list_points['FX']
+        base_currency_reseller_cost = reseller_cost * marketplace_price_list_points['FX']
+        base_currency_msrp = msrp * marketplace_price_list_points['FX']
+    return base_currency_cost, base_currency_reseller_cost, base_currency_msrp
