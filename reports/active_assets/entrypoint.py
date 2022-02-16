@@ -217,7 +217,6 @@ def _fill_marketplace_pricelist(client, marketplace_id, product_id):
                     marketplace_price_list['FX'] = 0
             else:
                 marketplace_price_list['FX'] = 0
-        print('In {} -> Currency: {} -> FX: {}'.format('_fill_marketplace_pricelist', marketplace_price_list['currency'], marketplace_price_list['FX']))
         price_list_version_points = client('pricing').versions[price_list_version['id']].points.all()
         for price_list_version_point in price_list_version_points:
             if float(price_list_version_point['attributes']['price']) != 0:
@@ -265,7 +264,6 @@ def _get_base_currency_financials(cost, reseller_cost, msrp, marketplace_price_l
     base_currency_reseller_cost = 0
     base_currency_msrp = 0
     if marketplace_price_list_points and len(marketplace_price_list_points) > 0:
-        print('In {} -> Currency: {} -> FX: {}'.format('_get_base_currency_financials', marketplace_price_list_points['currency'], marketplace_price_list_points['FX']))
         base_currency_cost = cost * marketplace_price_list_points['FX']
         base_currency_reseller_cost = reseller_cost * marketplace_price_list_points['FX']
         base_currency_msrp = msrp * marketplace_price_list_points['FX']
