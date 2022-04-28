@@ -71,6 +71,106 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "Apporoved Requests",
+            "readme_file": "reports/requests/README.md",
+            "entrypoint": "reports.requests.entrypoint.generate",
+            "audience": [
+                "provider",
+                "vendor"
+            ],
+            "report_spec": "2",
+            "parameters": [
+                {
+                    "id": "date",
+                    "type": "date_range",
+                    "name": "Report period",
+                    "description": "Provide the requests creation date period for the report",
+                    "required": true
+                },
+                {
+                    "id":"product",
+                    "type":"product",
+                    "name":"Product list",
+                    "description":"Select the products you want to include in report",
+                    "required":true
+                 },
+                {
+                    "id": "mkp",
+                    "type": "marketplace",
+                    "name": "Marketplaces",
+                    "required": true,
+                    "description": "Select the marketplaces you want to include in the report"
+                },
+                {
+                   "id":"rr_type",
+                   "type":"checkbox",
+                   "name":"Request type",
+                   "description":"Select the type of the requests you want to include in the report",
+                   "required":true,
+                   "choices":[
+                      {
+                         "value":"purchase",
+                         "label":"Purchase"
+                      },
+                      {
+                         "value":"change",
+                         "label":"Change"
+                      },
+                      {
+                         "value":"suspend",
+                         "label":"Suspend"
+                      },
+                      {
+                         "value":"resume",
+                         "label":"Resume"
+                      },
+                      {
+                         "value":"cancel",
+                         "label":"Cancel"
+                      },
+                      {
+                         "value":"adjustment",
+                         "label":"Adjustment"
+                      }
+                   ]
+                },
+                {
+                    "id": "connexion_type",
+                    "type": "checkbox",
+                    "name": "Type of Environment",
+                    "required": true,
+                    "description": "Select the type of environment you want to include in report",
+                    "choices": [
+                      {
+                        "value": "production",
+                        "label": "Production"
+                      },
+                      {
+                        "value": "test",
+                        "label": "Test"
+                      },
+                      {
+                        "value": "preview",
+                        "label": "Preview"
+                      }
+                    ]
+                }
+            ],
+            "renderers": [
+                {
+                    "id": "xlsx",
+                    "type": "xlsx",
+                    "default": true,
+                    "description": "Export data in Microsoft Excel 2020 format.",
+                    "template": "reports/requests/templates/xlsx/template.xlsx",
+                    "args": {
+                        "start_row": 1,
+                        "start_col": 1
+                    }
+                }
+            ]
         }
     ]
 }
