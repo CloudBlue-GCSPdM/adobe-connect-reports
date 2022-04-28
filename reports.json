@@ -73,7 +73,7 @@
             ]
         },
         {
-            "name": "Apporoved Requests",
+            "name": "Adobe Approved Requests",
             "readme_file": "reports/requests/README.md",
             "entrypoint": "reports.requests.entrypoint.generate",
             "audience": [
