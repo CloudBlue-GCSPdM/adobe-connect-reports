@@ -64,7 +64,7 @@ def generate(
         progress += 1
         total += 1
         progress_callback(progress, total)
-    
+
     for asset in assets:
         if asset['marketplace']['id'] not in price_list_points_DB:
             price_list_points_DB[asset['marketplace']['id']] = _fill_marketplace_pricelist(client, asset['marketplace']['id'], asset['product']['id'])
@@ -85,7 +85,7 @@ def _get_assets(client, parameters):
         query &= R().product.id.oneof(parameters['product']['choices'])
     query &= R().status.oneof(status)
     query &= R().connection.type.eq(environment)
-    
+
     return client('subscriptions').assets.filter(query)
 
 def _process_line(asset, marketplace_price_list_points):
@@ -175,14 +175,14 @@ def _process_asset_parameters(asset_parameters):
             adobe_user_email = assetParam['value']
     return seamless_move, discount, action, renewal_date, adobe_customer_id, adobe_vip_number, adobe_user_email
 
+
 def _calculate_renewal_date(renewal_date_parameter, asset_creation_date, action):
-    renewal_date = None
-    if action == 'purchase' or renewal_date_parameter == '-': # Net new, dates set by asset. Second validation n case the report is executed for a non-Adobe product, making sure it does nto fail
+    if action == 'purchase' or renewal_date_parameter == '-' or renewal_date_parameter == '':  # Net new, dates set by asset. Second validation n case the report is executed for a non-Adobe product, making sure it does nto fail
         if datetime.datetime.now(datetime.timezone.utc) < (datetime.datetime.fromisoformat(asset_creation_date) + datetime.timedelta(days = 365)):
             renewal_date = datetime.datetime.fromisoformat(asset_creation_date) + datetime.timedelta(days = 365)
         else:
             renewal_date = datetime.datetime.fromisoformat(asset_creation_date).replace(year = (datetime.datetime.now(datetime.timezone.utc).year + 1))
-    else: # Transfer, use parameter value
+    else:  # Transfer, use parameter value
         if '/' in renewal_date_parameter:
             regex = re.match('(.*)/(.*)/(.*)', renewal_date_parameter)
             renewal_date_parameter = regex.group(3) + '-' + regex.group(2) + '-' + regex.group(1)
@@ -190,6 +190,7 @@ def _calculate_renewal_date(renewal_date_parameter, asset_creation_date, action)
             renewal_date = datetime.datetime.fromisoformat(renewal_date_parameter).replace(tzinfo=datetime.timezone.utc) + datetime.timedelta(days = 365)
         else:
             renewal_date = datetime.datetime.fromisoformat(renewal_date_parameter).replace(tzinfo=datetime.timezone.utc).replace(year = (datetime.datetime.now(datetime.timezone.utc).year + 1))
+
     return renewal_date.strftime("%Y-%m-%d %H:%M:%S")
 
 def _fill_marketplace_pricelist(client, marketplace_id, product_id):
@@ -257,9 +258,9 @@ def _get_asset_type_financials_and_seats_number(asset_items, marketplace_price_l
                         cost = cost + int(item['quantity']) * float(marketplace_price_list_points['pricepoints'][product_id][item['global_id']]['cost'])
                         msrp = msrp + int(item['quantity']) * float(marketplace_price_list_points['pricepoints'][product_id][item['global_id']]['msrp'])
                         reseller_cost = reseller_cost + int(item['quantity']) * float(marketplace_price_list_points['pricepoints'][product_id][item['global_id']]['resellerCost'])
-    
+
     return asset_type, currency, cost, reseller_cost, msrp, seats
-    
+
 def _get_base_currency_financials(cost, reseller_cost, msrp, marketplace_price_list_points):
     base_currency_cost = 0
     base_currency_reseller_cost = 0
