@@ -3,6 +3,8 @@ from collections.abc import Iterable
 from types import MethodType
 from urllib.parse import parse_qs
 
+import os
+import json
 import pytest
 import requests
 import responses
@@ -141,3 +143,27 @@ def client_factory():
         client._execute_http_call = MethodType(_execute_http_call, client)
         return client
     return _create_client
+
+
+@pytest.fixture
+def ff_request():
+    with open(
+            os.path.join(
+                os.getcwd(),
+                'tests',
+                'ff_request.json',
+            ),
+    ) as request:
+        return json.load(request)
+
+
+@pytest.fixture
+def asset():
+    with open(
+            os.path.join(
+                os.getcwd(),
+                'tests',
+                'asset.json',
+            ),
+    ) as request:
+        return json.load(request)
