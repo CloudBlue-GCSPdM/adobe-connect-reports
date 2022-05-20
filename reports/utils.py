@@ -10,7 +10,7 @@ import collections
 
 
 def convert_to_datetime(param_value):
-    if param_value == "" or param_value == "-":
+    if param_value == "" or param_value == "-" or param_value is None:
         return "-"
 
     return datetime.strptime(
