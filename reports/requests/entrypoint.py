@@ -82,10 +82,10 @@ def generate(client, parameters, progress_callback, renderer_type=None, extra_co
                     try:
                         delta = float(item['quantity']) - float(item['old_quantity'])
                     except Exception:
-                        delta = item['quantity'] + ' - ' + item['old_quantity']
-                if delta > 0:
+                        delta_str = item['quantity'] + ' - ' + item['old_quantity']
+                if delta_str == '' and delta > 0:
                     delta_str = "+" + str(delta)
-                if delta < 0:
+                if delta_str == '' and delta < 0:
                     delta_str = "-" + str(delta)
                 yield (
                     get_basic_value(request, 'id'),  # Request ID
