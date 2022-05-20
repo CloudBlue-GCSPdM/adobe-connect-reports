@@ -79,7 +79,10 @@ def generate(client, parameters, progress_callback, renderer_type=None, extra_co
                 delta = 0
                 delta_str = ''
                 if len(item['quantity']) > 0 and len(item['old_quantity']) > 0:
-                    delta = float(item['quantity']) - float(item['old_quantity'])
+                    try:
+                        delta = float(item['quantity']) - float(item['old_quantity'])
+                    except Exception:
+                        delta = item['quantity'] + ' - ' + item['old_quantity']
                 if delta > 0:
                     delta_str = "+" + str(delta)
                 if delta < 0:
