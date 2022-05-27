@@ -7,7 +7,7 @@
 from connect.client.rql import R
 from reports.utils import (get_value, get_basic_value, convert_to_datetime, today_str)
 
-HEADERS = ['Request ID', 'Connect Subscription ID', 'End Customer Subscription ID',
+HEADERS = ['Request ID', 'Connect Subscription ID', 'End Customer Subscription ID', 'Action',
            'Adobe Order #', 'Adobe Transfer ID #', 'VIP #', 'Adobe Cloud Program ID',
            'Pricing SKU Level (Volume Discount level)',
            'Product Description', 'Part Number', 'Product Period', 'Cumulative Seat', 'Order Delta',
@@ -28,6 +28,7 @@ def generate(client, parameters, progress_callback, renderer_type=None, extra_co
         vip_number = ''
         adobe_cloud_program_id = ''
         pricing_level = ''
+        action = ''
 
         # get subscription parameters values
         for param in request['asset']['params']:
@@ -37,6 +38,9 @@ def generate(client, parameters, progress_callback, renderer_type=None, extra_co
                 order_number = get_basic_value(param, 'value')
             if 'transfer_id' == get_basic_value(param, 'id'):
                 transfer_number = get_basic_value(param, 'value')
+            if 'action_type' == get_basic_value(param, 'id'):
+                action = get_basic_value(param, 'value')
+
 
         subscription = _get_subscription(client, request['asset']['id'])
         if subscription.count() > 0:
@@ -91,6 +95,7 @@ def generate(client, parameters, progress_callback, renderer_type=None, extra_co
                     get_basic_value(request, 'id'),  # Request ID
                     get_value(request, 'asset', 'id'),  # Connect Subscription ID
                     get_value(request, 'asset', 'external_id'),  # End Customer Subscription ID
+                    action,  # Type of Purchase
                     order_number,  # Adobe Order #
                     transfer_number,  # Adobe Transfer ID #
                     vip_number,  # VIP #
