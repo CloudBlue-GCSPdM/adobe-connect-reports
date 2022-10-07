@@ -177,7 +177,7 @@ def _process_asset_parameters(asset_parameters):
 
 
 def _calculate_renewal_date(renewal_date_parameter, asset_creation_date, action):
-    if action == 'purchase' or renewal_date_parameter == '-' or renewal_date_parameter == '':  # Net new, dates set by asset. Second validation n case the report is executed for a non-Adobe product, making sure it does nto fail
+    if action == 'purchase' or renewal_date_parameter == '-' or renewal_date_parameter == '' or '/' not in renewal_date_parameter:  # Net new, dates set by asset. Second validation n case the report is executed for a non-Adobe product, making sure it does nto fail
         if datetime.datetime.now(datetime.timezone.utc) < (datetime.datetime.fromisoformat(asset_creation_date) + datetime.timedelta(days = 365)):
             renewal_date = datetime.datetime.fromisoformat(asset_creation_date) + datetime.timedelta(days = 365)
         else:
